@@ -22,7 +22,9 @@ int parseCommand(struct commandType * com)
 	else if(isCommand(command, "exit") == true)
 		return exitCommand(com);
 	else if(isCommand(command, "kill") == true)
-		return killCommand(com);
+		return killCommand(com, SIGKILL);
+	else if(isCommand(command, "term") == true)
+		return killCommand(com, SIGTERM);
 	else if(isCommand(command, "help") == true)
 		return helpCommand(com);
 	else if(isCommand(command, "which") == true)
@@ -240,11 +242,20 @@ int systemCommand(struct commandType * com)
 }
 
 int exitCommand(struct commandType * com) 
-{ 
+{
+	if(processNum > 1)
+	{
+		printf("Shell cannot exit: there are processes running.  Kill or terminate all processes before exiting.\n");
+		/*com->VarNum = 1;
+		com->VarList[0] = "ps";
+		com->command = "ps";*/
+		psCommand(com);
+		return ERR_COMMFAIL;
+	}
 	exit(1);
 }
 
-int killCommand(struct commandType * com) 
+int killCommand(struct commandType * com, int killMode) 
 { 
 	if(com->VarNum < 2)
 	{
@@ -258,9 +269,23 @@ int killCommand(struct commandType * com)
 		{
 			if(processIds[i] == atoi(com->VarList[1]))
 			{
-				kill(processIds[i], SIGKILL);
-				processes[i] = "--dead--";
-				processIds[i] = -1;
+				kill(processIds[i], killMode);
+
+				if(killMode == SIGKILL)
+					printf("Process with PID: '%i' has been killed.\n", processIds[i]);
+				else if(killMode == SIGTERM)
+					printf("PRocess with PI: '%i' has been terminated.\n", processIds[i]);
+				
+				if(i < processNum)
+				{
+					int j;
+					for(j = i; j < processNum; j++)
+					{
+						processes[j] = processes[j+1];
+						processIds[j] = processIds[j+1];
+					}
+				}
+				processNum--;
 			}
 		}
 	}

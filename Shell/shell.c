@@ -39,9 +39,6 @@ int shell()
 {
 	char * cmdLine;
   	parseInfo *info; /*info stores all the information returned by parser.*/
-  	struct commandType *com; /*com stores command name and Arg list for one command.*/
-	int commandErr;
-	bool background;
 	
 	while(1)
   	{
@@ -58,44 +55,8 @@ int shell()
       		free(cmdLine);
       		continue;
     	}
-
-    	/*com contains the info. of the command before the first "|"*/
-    	com=&info->CommArray[0];
-    	if ((com == NULL)  || (com->command == NULL)) 
-		{
-      		free_info(info);
-      		free(cmdLine);
-      		continue;
-    	}
-
-		commandErr = parseCommand(com);
 		
-		if(info->boolBackground == 0)
-			background = false;
-		else
-			background = true;
-
-		if(commandErr == ERR_NOCOMM)
-		{
-			printf("'%s' is not a built-in command; Checking path programs...\n", com->command);
-			commandErr = runProgram(com, background);
-		}	
-		else if(commandErr == ERR_COMMFAIL)
-		{
-			fprintf(stderr, "Command '%s' did not complete successfully.\n", com->command);
-		}
-
-		if(commandErr == ERR_NOPROG)
-		{
-			fprintf(stderr, "Program '%s' does not exist.\n", com->command);
-		}
-		else if(commandErr == ERR_PROGFAIL)
-		{
-			fprintf(stderr, "Program '%s' did not complete successfully.\n", com->command);
-		}
-		
-		strcpy(history[histNum], cmdLine);
-		histNum = histNum + 1;
+		runMultiCommands(info, cmdLine);
 
     	free_info(info);
     	free(cmdLine);
@@ -103,62 +64,117 @@ int shell()
 	} /* while (1) */
 }
 
-int addProcess(char * name, int processId)
+int runMultiCommands(parseInfo * info, char * cmdLine)
 {
-	if(processNum == 100)
-		return -1;
-	
+	struct commandType * com;
+	bool background;
+	bool inFile;
+	bool outFile;
+	int commandErr;
+	FILE * infile;
+	FILE * outfile;
 
-	processIds[processNum] = processId;
-	processes[processNum] = name;
-	processNum++;
-	
-	return 0;
-}
+	int old_stdout;
+	int old_stdin;
 
-int removeProcess(int index)
-{
-	if(index < 0 || index >= 100)
-		return -1;
-	
-	processes[index] = "";
-	processIds[index] = 0;
+	inFile = false;
+	outFile = false;
 
-	if(index < processNum)
+   	/*com contains the info. of the command before the first "|"*/
+   	com=&info->CommArray[0];
+   	if ((com == NULL)  || (com->command == NULL)) 
 	{
-		int i;
-		for(i = index; i < processNum; i++)
+     	free_info(info);
+     	free(cmdLine);
+     	return ERR_COMMFAIL;
+   	}
+	
+	commandErr = parseCommand(com);
+	
+	if(strlen(info->outFile) > 0)
+	{
+		outfile = fopen(info->outFile,"w");
+		
+		if(outfile == NULL)
 		{
-			processes[i] = processes[i+1];
-			processIds[i] = processIds[i+1];
+			fprintf(stderr, "Output file '%s' failed to open.", info->outFile);
+			return ERR_COMMFAIL;
 		}
+		
+		outFile = true;
+		old_stdout = dup(STDOUT_FILENO);
+		dup2(fileno(outfile), STDOUT_FILENO);
+	}
+	if(strlen(info->inFile) > 0)
+	{
+		infile = fopen(info->inFile, "r");
+		
+		if(infile == NULL)
+		{
+			fprintf(stderr, "Input file '%s' failed to open.", info->inFile);
+		}
+		
+		inFile = true;
+		old_stdin = dup(STDIN_FILENO);
+		dup2(fileno(infile), STDIN_FILENO);
 	}
 
-	processNum--;
 
-	return 0;
+	if(info->boolBackground == 0)
+		background = false;
+	else
+		background = true;
+	if(commandErr == ERR_NOCOMM)
+	{
+		printf("'%s' is not a built-in command; Checking path programs...\n", com->command);
+		commandErr = runProgram(com, background);
+	}	
+	else if(commandErr == ERR_COMMFAIL)
+	{
+		fprintf(stderr, "Command '%s' did not complete successfully.\n", com->command);
+	}
+		if(commandErr == ERR_NOPROG)
+	{
+		fprintf(stderr, "Program '%s' does not exist.\n", com->command);
+	}
+	else if(commandErr == ERR_PROGFAIL)
+	{
+		fprintf(stderr, "Program '%s' did not complete successfully.\n", com->command);
+	}
+	
+	strcpy(history[histNum], cmdLine);
+	histNum = histNum + 1;
+
+	if(outFile == true)
+	{	
+		info->outFile[0] = '\0';
+		dup2(old_stdout, STDOUT_FILENO);
+		close(old_stdout);
+		fclose(outfile);
+	}
+	if(inFile == true)
+	{
+		info->inFile[0] = '\0';
+		dup2(old_stdin, STDIN_FILENO);
+		close(old_stdin);
+		fclose(infile);
+	}
+
+	return commandErr;
 }
 
-int findProcessById(int processId)
+int runCommands(struct commandType * com)
 {
-	int i;
-	for(i = 0; i < processNum; i++)
-	{
-		if(processIds[i] == processId)
-			return i;
-	}
-	return -1;
+
 }
 
-int findProcessByName(char * name)
+int runPrograms(parseInfo * info)
 {
 	int i;
-	for(i = 0; i < processNum; i++)
+	for(i = 0; i < info->pipeNum; i++)
 	{
-		if(strncmp(processes[i], name, strlen(name)))
-			return i;
+		print_info(info);
 	}
-	return -1;
 }
 
 int runProgram(struct commandType * com, bool bg)
@@ -220,6 +236,64 @@ int runProgram(struct commandType * com, bool bg)
 	}
 
 	return ERR_SUCCESS;
+}
+
+int addProcess(char * name, int processId)
+{
+	if(processNum == 100)
+		return -1;
+	
+
+	processIds[processNum] = processId;
+	processes[processNum] = name;
+	processNum++;
+	
+	return 0;
+}
+
+int removeProcess(int index)
+{
+	if(index < 0 || index >= 100)
+		return -1;
+	
+	processes[index] = "";
+	processIds[index] = 0;
+
+	if(index < processNum)
+	{
+		int i;
+		for(i = index; i < processNum; i++)
+		{
+			processes[i] = processes[i+1];
+			processIds[i] = processIds[i+1];
+		}
+	}
+
+	processNum--;
+
+	return 0;
+}
+
+int findProcessById(int processId)
+{
+	int i;
+	for(i = 0; i < processNum; i++)
+	{
+		if(processIds[i] == processId)
+			return i;
+	}
+	return -1;
+}
+
+int findProcessByName(char * name)
+{
+	int i;
+	for(i = 0; i < processNum; i++)
+	{
+		if(strncmp(processes[i], name, strlen(name)))
+			return i;
+	}
+	return -1;
 }
 
 int main (int argc, char **argv)

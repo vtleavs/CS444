@@ -5,7 +5,7 @@
 
 3) [X] - Ability to access executables from the PATH
 
-4) [ ] - I/O Stream redirecting
+4) [X] - I/O Stream redirecting
 
 5) [X] - Send commands to the background, waitpid(pid, status, options);
 
@@ -17,6 +17,6 @@
 
 8) [X] - Implement jobs, cd, history, exit, kill, help
 
-9) [ ] - Force user to kill background processes before exiting
+9) [X] - Force user to kill background processes before exiting
 
 10) [ ] - Implement pipes

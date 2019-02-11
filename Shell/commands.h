@@ -50,7 +50,7 @@ int histCommand(struct commandType * com);
 int pwdCommand(struct commandType * com);
 int systemCommand(struct commandType * com);
 int exitCommand(struct commandType * com);
-int killCommand(struct commandType * com);
+int killCommand(struct commandType * com, int killMode);
 int helpCommand(struct commandType * com);
 int whichCommand(struct commandType * com);
 int psCommand(struct commandType * com);
