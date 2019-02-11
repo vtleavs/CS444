@@ -25,25 +25,32 @@
 
 #include "parse.h"
 
+/* for some reason I decided I should make fake booleans */
 typedef int bool;
 #define true 1
-#define false 2
+#define false 0
 
+/* ERROR CODES */
 #define ERR_SUCCESS 0
 #define ERR_NOCOMM 1
 #define ERR_COMMFAIL 2
 #define ERR_NOPROG 3
 #define ERR_PROGFAIL 4
 
-char  history[200][200];
+/* history list */
+char history[200][200];
 int histNum;
+
+/* shell options */
 bool colorOn;
 bool pathPrompt;
 
+/* active process list */
 char * processes[100];
 int processIds[100];
 int processNum;
 
+/* commands */
 int cdCommand(struct commandType * com);
 int lsCommand(struct commandType * com);
 int histCommand(struct commandType * com);
@@ -56,6 +63,7 @@ int whichCommand(struct commandType * com);
 int psCommand(struct commandType * com);
 int echoCommand(struct commandType * com);
 
+/* utilities */
 int parseCommand(struct commandType * com);
 bool isCommand(char * command, char * comName);
 char * buildPrompt();

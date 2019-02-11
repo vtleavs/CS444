@@ -1,0 +1,54 @@
+BenjOS Shell v0.1 Unix Edition
+by Benji Leavitt
+02/11/2019
+
+Status:
+	All required concepts are implemented with the exception of pipes
+	Tested successfully on opsys.clarkson.edu
+	I did not touch the Windows side of things, this code is exclusively UNIX (though I bet it only runs on linux)
+
+Features:
+	- !###		will recall a specific command from history.
+	- !			will recall the previous command.
+	- hist  	shows the list of previously used commands (Currently maxed at 100)
+	- ls		lists the files in the current directory and displays their type and size in KB
+	- ps		shows list of active processes
+	- jobs		calls the ps command for friendlier usability
+	- help		helps you (I ran out of time to finish the help menu, but this list here should suffice)
+	- exit		refuses to let user exit if there are sub-processes running.  Displays them if needed.  Then exits
+	- cd		changes the current working directory
+	- pwd		prints out the current working directory
+	- system	allows user to access shell settings (ex. 'system prompt' changes the prompt to a single char. 'system prompt path' changes back)
+	- kill		kills an active process forcefully using the SIGKILL flag
+	- term		terminates an active process gracefully using the SIGTERM flag
+	- which		displays the location of a command or program in the PATH
+	- echo		prints newline to stdout. if any arguments are given they are echoed to stdout as well
+
+	- Pretty colors! :)
+
+	- Can run any program in the path
+	- Can use absolute or relative path to run a program
+	- Can send program to background (no way to fg it)
+	- Can redirect I/O to files
+	- Pipes are confusing :(
+	- Introduced command.h and command.c to handle built-in commands
+	- Added 'make run' command to Makefile that compiles and runs because I'm lazy
+
+	- Error tracking is provided by passing the following ints:
+		- ERR_SUCCESS  = 0:  No error, successful execution
+		- ERR_NOCOMM   = 1:  No such built-in command, not necessarily a failure
+		- ERR_COMMFAIL = 2:  Command failed to execute properly, an actual failure of a command
+		- ERR_NOPROG   = 3:  No such program, program not found in path
+		- ERR_PROGFAIL = 4:  Path program failed to execute properly 
+
+Known Bugs:
+	- The ps command does not show the names of the processes that are running.  It has something to do with string copying but I can't figure it out..
+	- For some reason, if you type 'quit', which is not a command, it sends the program into an infinite loop
+	- On a cold, quiet winter's night, a lone wolf can be heard howling mournfully in the distance.  Will remove wolf once found..
+
+Resources & Other Help:
+	- The code uses ANSI Color Codes provided by 'Andrejs Cainikovs'@stackoverflow.com
+	- My father provided a bit of help because he's smart
+	- I used a lot of stackoverflow
+	- Other than the Color Codes, no code was copied from any other source
+	- Any similarity to tutorials or stackoverflow answers is simply undeveloped technique

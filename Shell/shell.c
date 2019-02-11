@@ -11,23 +11,19 @@
 #include <limits.h>
 #include "parse.h"   /*include declarations for parse-related structs*/
 #include "commands.h"
-#include "datastruct.h"
-/*
-char * processes[100];
-int processIds[100];
-int processNum;
-*/
+
 void init()
 {
 	histNum = 0;
 	colorOn = true;
 	pathPrompt = true;
 	
-
+	/* adds this process to the process list as PID 0 */
 	processes[0] = "benjos-shell-unix-0.1";
 	processIds[0] = 0;
 	processNum = 1;
 
+	/* prints a welcom message */
 	system("clear");
 	if(colorOn)
 		fprintf(stdout, ANSI_COLOR_CYAN "BenjOS Shell UNIX V0.1\n" ANSI_COLOR_RESET);
@@ -56,7 +52,7 @@ int shell()
       		continue;
     	}
 		
-		runMultiCommands(info, cmdLine);
+		runCommands(info, cmdLine);
 
     	free_info(info);
     	free(cmdLine);
@@ -64,7 +60,8 @@ int shell()
 	} /* while (1) */
 }
 
-int runMultiCommands(parseInfo * info, char * cmdLine)
+/* I basically just moved this implentation out of the shell() function */
+int runCommands(parseInfo * info, char * cmdLine)
 {
 	struct commandType * com;
 	bool background;
@@ -91,6 +88,7 @@ int runMultiCommands(parseInfo * info, char * cmdLine)
 	
 	commandErr = parseCommand(com);
 	
+	/* if the outfile or infile is specified, swap the I/O streams to those files */
 	if(strlen(info->outFile) > 0)
 	{
 		outfile = fopen(info->outFile,"w");
@@ -119,11 +117,13 @@ int runMultiCommands(parseInfo * info, char * cmdLine)
 		dup2(fileno(infile), STDIN_FILENO);
 	}
 
-
+	/* checks whether to run the program in the background or not */
 	if(info->boolBackground == 0)
 		background = false;
 	else
 		background = true;
+
+	/* goes through the layers of call attempts:  built-in -> PATH -> failure */
 	if(commandErr == ERR_NOCOMM)
 	{
 		printf("'%s' is not a built-in command; Checking path programs...\n", com->command);
@@ -145,6 +145,7 @@ int runMultiCommands(parseInfo * info, char * cmdLine)
 	strcpy(history[histNum], cmdLine);
 	histNum = histNum + 1;
 
+	/* make sure to set I/O back to the terminal.  I got a good hour's worth of exciting head to wall action from this one */
 	if(outFile == true)
 	{	
 		info->outFile[0] = '\0';
@@ -163,20 +164,13 @@ int runMultiCommands(parseInfo * info, char * cmdLine)
 	return commandErr;
 }
 
-int runCommands(struct commandType * com)
-{
-
-}
-
-int runPrograms(parseInfo * info)
-{
-	int i;
-	for(i = 0; i < info->pipeNum; i++)
-	{
-		print_info(info);
-	}
-}
-
+/* I'm honestly still a little fuzzy on the whole pipes thing.  My dad helped me with this
+   I think I'm beginning to understand it, but for now this is what I was able to cobble together
+   with my dad's old textbooks and some good old-fashioned trial and error.  I was able to get the
+   piping working in one direction by myself, but I could not figure out how to wrest the file streams
+   back from the child once given away, that's where I had my trouble.  I'm honestly sure I did it wrong,
+   but it seems to work so I'll ship it :P
+*/
 int runProgram(struct commandType * com, bool bg)
 {
 	int processId;
@@ -186,11 +180,6 @@ int runProgram(struct commandType * com, bool bg)
 	int pipefd[2];
 	pipe(pipefd);
 
-/*
-	child_stdin = dup(stdin);
-	child_stdout = dup(stdout);
-	child_stderr = dup(stderr);
-*/
 	strcpy(command, com->command);
 	command[strlen(com->command)] = '\0';
 	
@@ -302,12 +291,9 @@ int main (int argc, char **argv)
 	fprintf(stderr, "Shell only compatible with UNIX systems.\n");
 	return 1;
 #endif
-
-	int err;
-  	
 	init();
-	err = shell();
+	shell();
 
-	return err;
+	return 0;
 }
 

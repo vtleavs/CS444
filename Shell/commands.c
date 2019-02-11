@@ -4,9 +4,11 @@ int parseCommand(struct commandType * com)
 {
 	char * command = com->command;
 
+	/* alternative to hist command */
 	if(command[0] == '!')
 		return histCommand(com);
 
+	/* runs appropriate command based on user provided command */
 	if(isCommand(command, "cd") == true)
 		return cdCommand(com);
 	else if(isCommand(command, "ls") == true)
@@ -37,13 +39,13 @@ int parseCommand(struct commandType * com)
 	return ERR_NOCOMM;
 }
 
+/* an abstracted version of strncmp() to make the parseCommand() function less messy :) */
 bool isCommand(char * command, char * comName)
 {
 	if(strncmp(command, comName, strlen(comName)) == 0)
 		return true;
 	return false;
 }
-
 
 char * buildPrompt()
 {
@@ -96,7 +98,7 @@ int lsCommand(struct commandType * com)
 		directory = com->VarList[1];
     }
 
-	printf(ANSI_COLOR_CYAN "type\tsize\t\tpath\n" ANSI_COLOR_RESET);
+	printf(ANSI_COLOR_CYAN "type\tsize\t\tname\n" ANSI_COLOR_RESET);
 
 	d = opendir(directory);
 
@@ -151,6 +153,7 @@ int recall(int rec)
 
 int histCommand(struct commandType * com)
 {
+	/* if command is !###, then recall */
 	if(com->command[0] == '!')
     {	
 		char num[5];
@@ -165,7 +168,8 @@ int histCommand(struct commandType * com)
 	 	else
 		 	return recall(atoi(num));
 	}
-
+	
+	/* otherwise, just display the hist list */ 
 	if(com->VarNum < 2)
 	{
 		int i;
@@ -175,6 +179,7 @@ int histCommand(struct commandType * com)
 		}
 		printf("%i\t%s\n", histNum, com->command);
 	}
+	/* alternatively, you can use 'hist ###' to recall a command */
 	else
 	{
 		int comNum;
@@ -246,9 +251,6 @@ int exitCommand(struct commandType * com)
 	if(processNum > 1)
 	{
 		printf("Shell cannot exit: there are processes running.  Kill or terminate all processes before exiting.\n");
-		/*com->VarNum = 1;
-		com->VarList[0] = "ps";
-		com->command = "ps";*/
 		psCommand(com);
 		return ERR_COMMFAIL;
 	}
@@ -274,7 +276,7 @@ int killCommand(struct commandType * com, int killMode)
 				if(killMode == SIGKILL)
 					printf("Process with PID: '%i' has been killed.\n", processIds[i]);
 				else if(killMode == SIGTERM)
-					printf("PRocess with PI: '%i' has been terminated.\n", processIds[i]);
+					printf("Process with PID: '%i' has been terminated.\n", processIds[i]);
 				
 				if(i < processNum)
 				{
@@ -320,6 +322,7 @@ int helpCommand(struct commandType * com)
 	return ERR_SUCCESS; 
 }
 
+/* reads in the PATH, then splits on a ':' and checks each location for the requested program */
 int whichCommand(struct commandType * com) 
 {	
 	char * path;
