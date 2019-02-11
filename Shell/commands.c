@@ -251,30 +251,16 @@ int killCommand(struct commandType * com)
 		fprintf(stderr, "Command 'kill' requires arguments.\n");
 		return ERR_COMMFAIL;
 	}
-	else if(isCommand(com->VarList[1], "-a") == true)
+	else
 	{
 		int i;
 		for(i = 1; i < processNum; i++)
 		{
-			kill(processIds[i], SIGKILL);
-			processes[i] = "--dead--";
-			processIds[i] = -1;
-		}
-	}
-	else
-	{
-		int i;
-		int j;
-		for(i = 1; i < com->VarNum; i++)
-		{
-			for(j = 1; j < processNum; i++)
+			if(processIds[i] == atoi(com->VarList[1]))
 			{
-				if(processIds[j] == atoi(com->VarList[i]))
-				{
-					kill(processIds[j], SIGKILL);
-					processes[j] = "--dead--";
-					processIds[j] = -1;
-				}
+				kill(processIds[i], SIGKILL);
+				processes[i] = "--dead--";
+				processIds[i] = -1;
 			}
 		}
 	}
@@ -283,8 +269,87 @@ int killCommand(struct commandType * com)
 	return 0;
 }
 
-int helpCommand(struct commandType * com) { return 0; }
-int whichCommand(struct commandType * com) { return 0; }
+int helpCommand(struct commandType * com) 
+{ 
+	if(com->VarNum < 2)
+	{
+		printf("BenjOS Shell v.01 UNIX Edition Manual\n\n"
+				"Built-in Commands:\n\n");
+
+		printf("\t" ANSI_COLOR_CYAN "help <" ANSI_COLOR_MAGENTA "command" ANSI_COLOR_CYAN ">" ANSI_COLOR_RESET " Access shell manual.\n"
+				"\t\t" ANSI_COLOR_MAGENTA "no args" ANSI_COLOR_RESET ": show this manual\n"
+				"\t\t" ANSI_COLOR_MAGENTA "command" ANSI_COLOR_RESET ": specify a built-in command to view the manual for that command\n\n");
+
+		printf("\t" ANSI_COLOR_CYAN "which <" ANSI_COLOR_MAGENTA "program" ANSI_COLOR_CYAN ">" ANSI_COLOR_RESET " Locate active program.\n"
+				"\t\t" ANSI_COLOR_MAGENTA "program" ANSI_COLOR_RESET ": specify program to locate\n\n");
+				
+		printf("\t" ANSI_COLOR_CYAN "ps" ANSI_COLOR_RESET " View active processes.\n"
+				"\t\t" ANSI_COLOR_MAGENTA "no args" ANSI_COLOR_RESET ": show all active child processes of this shell\n\n");
+				
+		printf("\t" ANSI_COLOR_CYAN "!" ANSI_COLOR_MAGENTA "###"  ANSI_COLOR_RESET " Repeat specific command (find command number with 'hist').\n"
+				"\t\t" ANSI_COLOR_MAGENTA "###" ANSI_COLOR_RESET ": specify id of the command in history to repeat\n\n");
+
+		printf("INCOMPLETE LIST\n\n");
+	}
+
+	return ERR_SUCCESS; 
+}
+
+int whichCommand(struct commandType * com) 
+{	
+	char * path;
+	char pathDir[100];
+	int i;
+	int j;
+
+	if(com->VarNum < 2)
+		return ERR_COMMFAIL;
+
+	path = getenv("PATH");
+	
+	j = 0;
+	for(i = 0; i < strlen(path); i++)
+	{
+		if(path[i] != ':')
+		{
+			pathDir[i-j] = path[i];
+		}
+		else
+		{
+			int k;
+			DIR * d;
+			struct dirent * dir;
+			int comp;
+
+			pathDir[i-j] = '\0';
+			j = i+1;
+
+			d = opendir(pathDir);
+		
+			while( d != NULL && (dir = readdir(d)) != NULL )
+			{
+				comp = strncmp(com->VarList[1], dir->d_name, strlen(dir->d_name));
+				if(comp == 0)
+				{
+					printf("%s/%s\n", pathDir, dir->d_name);
+					return ERR_SUCCESS;
+				}
+
+			}
+			
+			closedir(d);
+		}
+	}
+
+	if(i == strlen(path))
+	{
+		printf("'%s' is not a program in the path.\n", com->VarList[1]);
+		return ERR_SUCCESS;
+	}
+
+	return ERR_COMMFAIL;
+
+}
 
 int psCommand(struct commandType * com) 
 {

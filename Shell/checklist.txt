@@ -1,7 +1,7 @@
 1) [X] - Print current working directory in prompt
 	Can also use pwd to print working directory
 
-2) [ ] - Implement which command
+2) [X] - Implement which command
 
 3) [X] - Ability to access executables from the PATH
 
@@ -15,11 +15,8 @@
 7) [X] - Use !### to recall commands
 	'!' with no number specified is a recall last command ( !-1 seems way too complicated )
 
-8) [ ] - Implement jobs, cd, history, exit, kill, help
+8) [X] - Implement jobs, cd, history, exit, kill, help
 
 9) [ ] - Force user to kill background processes before exiting
 
 10) [ ] - Implement pipes
-
-
-11) [ ] -
