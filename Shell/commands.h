@@ -12,6 +12,7 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <limits.h>
+#include <signal.h>
 
 /* ANSI Codes from 'Andrejs Cainikovs'@stackoverflow.com */
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -28,21 +29,31 @@ typedef int bool;
 #define true 1
 #define false 2
 
+#define ERR_SUCCESS 0
+#define ERR_NOCOMM 1
+#define ERR_COMMFAIL 2
+#define ERR_NOPROG 3
+#define ERR_PROGFAIL 4
+
 char  history[200][200];
 int histNum;
 bool colorOn;
 bool pathPrompt;
+
+char * processes[100];
+int processIds[100];
+int processNum;
 
 int cdCommand(struct commandType * com);
 int lsCommand(struct commandType * com);
 int histCommand(struct commandType * com);
 int pwdCommand(struct commandType * com);
 int systemCommand(struct commandType * com);
-int jobsCommand(struct commandType * com);
 int exitCommand(struct commandType * com);
 int killCommand(struct commandType * com);
 int helpCommand(struct commandType * com);
 int whichCommand(struct commandType * com);
+int psCommand(struct commandType * com);
 int echoCommand(struct commandType * com);
 
 int parseCommand(struct commandType * com);

@@ -3,11 +3,11 @@
 
 2) [ ] - Implement which command
 
-3) [ ] - Ability to access executables from the PATH
+3) [X] - Ability to access executables from the PATH
 
 4) [ ] - I/O Stream redirecting
 
-5) [ ] - Send commands to the background, waitpid(pid, status, options);
+5) [X] - Send commands to the background, waitpid(pid, status, options);
 
 6) [X] - Implement history command
 	Can give argument to 'history' to rerun a specific command (ex. history 10)
@@ -19,5 +19,7 @@
 
 9) [ ] - Force user to kill background processes before exiting
 
-10) [ ] - 
+10) [ ] - Implement pipes
 
+
+11) [ ] -

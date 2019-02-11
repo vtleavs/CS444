@@ -18,7 +18,7 @@ int parseCommand(struct commandType * com)
 	else if(isCommand(command, "system") == true)
 		return systemCommand(com);
 	else if(isCommand(command, "jobs") == true)
-		return jobsCommand(com);
+		return psCommand(com);
 	else if(isCommand(command, "exit") == true)
 		return exitCommand(com);
 	else if(isCommand(command, "kill") == true)
@@ -27,10 +27,12 @@ int parseCommand(struct commandType * com)
 		return helpCommand(com);
 	else if(isCommand(command, "which") == true)
 		return whichCommand(com);
+	else if(isCommand(command, "ps") == true)
+		return psCommand(com);
 	else if(isCommand(command, "echo") == true)
 		return echoCommand(com);
 	
-	return -1;
+	return ERR_NOCOMM;
 }
 
 bool isCommand(char * command, char * comName)
@@ -62,9 +64,13 @@ int cdCommand(struct commandType * com)
     if(com->VarNum < 2)
     {
         fprintf(stderr, "Command 'cd' requires arguments.\n");
-        return -1;
+        return ERR_COMMFAIL;
     }
-    return chdir(com->VarList[1]);
+	if(chdir(com->VarList[1]) == 0)
+	{
+		return ERR_SUCCESS;
+	}
+	return ERR_COMMFAIL;
 }
 
 int lsCommand(struct commandType * com)
@@ -116,13 +122,13 @@ int lsCommand(struct commandType * com)
 	   printf("%s\t%.2f KB\t\t%s\n", fileTypeName, (float)fileSize/1024.0, fileName);
 	}
     closedir(d);
-    return 0;
+    return ERR_SUCCESS;
 }
 
 int recall(int rec)
 {
     int err;
-    err = 0;
+    err = ERR_COMMFAIL;
     if(rec <= histNum)
     {
         parseInfo * info;
@@ -174,15 +180,15 @@ int histCommand(struct commandType * com)
 		return recall(comNum);
 	}
 
-	return 0;
+	return ERR_SUCCESS;
 }
 
 int pwdCommand(struct commandType * com)
 {
-    char dir[100];
-    getcwd(dir, sizeof(dir));
+	char dir[100];
+	getcwd(dir, sizeof(dir));
     printf("%s\n", dir);
-    return 0;
+    return ERR_SUCCESS;
 }
 
 int systemCommand(struct commandType * com)
@@ -190,14 +196,14 @@ int systemCommand(struct commandType * com)
 	if(com->VarNum < 2)
 	{
 		fprintf(stderr, "Command 'system' requires arguments\n");
-		return -1;
+		return ERR_COMMFAIL;
 	}
 	else if(strncmp(com->VarList[1], "color", strlen("color")) == 0)
 	{
 		if(com->VarNum < 3)
 		{
 			fprintf(stderr, "Command 'system color' requires arguments 'true' or 'false'\n");
-			return -1;
+			return ERR_COMMFAIL;
 		}
 		else if(strncmp(com->VarList[2], "true", strlen("true")) == 0)
 		{
@@ -210,7 +216,7 @@ int systemCommand(struct commandType * com)
 		else
 		{
 		    fprintf(stderr, "Command 'system color' requires arguments 'true' or 'false'\n");
-		    return -1;
+		    return ERR_COMMFAIL;
 		}
 	}
 	else if(strncmp(com->VarList[1], "prompt", strlen("prompt")) == 0)
@@ -226,25 +232,70 @@ int systemCommand(struct commandType * com)
 		else
 		{
 			fprintf(stderr, "Command 'system prompt' requires the arguments '' or 'path'\n");
-			return -1;
+			return ERR_COMMFAIL;
 		}
 	}
 
-	return 0;
+	return ERR_SUCCESS;
 }
-
-
-
-int jobsCommand(struct commandType * com) { return 0; }
 
 int exitCommand(struct commandType * com) 
 { 
 	exit(1);
 }
 
-int killCommand(struct commandType * com) { return 0; }
+int killCommand(struct commandType * com) 
+{ 
+	if(com->VarNum < 2)
+	{
+		fprintf(stderr, "Command 'kill' requires arguments.\n");
+		return ERR_COMMFAIL;
+	}
+	else if(isCommand(com->VarList[1], "-a") == true)
+	{
+		int i;
+		for(i = 1; i < processNum; i++)
+		{
+			kill(processIds[i], SIGKILL);
+			processes[i] = "--dead--";
+			processIds[i] = -1;
+		}
+	}
+	else
+	{
+		int i;
+		int j;
+		for(i = 1; i < com->VarNum; i++)
+		{
+			for(j = 1; j < processNum; i++)
+			{
+				if(processIds[j] == atoi(com->VarList[i]))
+				{
+					kill(processIds[j], SIGKILL);
+					processes[j] = "--dead--";
+					processIds[j] = -1;
+				}
+			}
+		}
+	}
+
+
+	return 0;
+}
+
 int helpCommand(struct commandType * com) { return 0; }
 int whichCommand(struct commandType * com) { return 0; }
+
+int psCommand(struct commandType * com) 
+{
+	int i;
+	printf("%i/100 processes used.\n", processNum);
+	for(i = 0; i < processNum; i++)
+	{
+		printf("%i\t%s\n", processIds[i], processes[i]);
+	}
+	return ERR_SUCCESS;
+}
 
 int echoCommand(struct commandType * com) 
 {
@@ -254,7 +305,7 @@ int echoCommand(struct commandType * com)
 		printf("%s ", com->VarList[i]);
 	}
 	printf("\n");
-	return 0; 
+	return ERR_SUCCESS; 
 }
 
 

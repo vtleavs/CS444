@@ -15,6 +15,34 @@
  * Returns: parse information structure
  */
 #define MAXLINE 81
+/*
+char * strcpy(char * string, int length)
+{
+	char * result;
+	char res[100];
+	int i;
+
+	for(i = 0; i < length; i++)
+	{
+		res[i] = string[i];
+	}
+	result = res;
+	return result;
+}
+*/
+char * substr(char * string, int index, int length)
+{
+	char res[100];
+	char * ress;
+	int i;
+	for(i = index; i < index+length; i++)
+	{
+		res[i-index] = string[i];
+	}
+	ress = res;
+	return ress;
+}
+
 
 void init_info(parseInfo *p) {
   int i;

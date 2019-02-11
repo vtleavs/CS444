@@ -26,8 +26,7 @@ typedef struct {
 parseInfo *parse(char *);
 void free_info(parseInfo *);
 void print_info(parseInfo *);
-
-
+char * substr(char * string, int index, int length);
 
 
 
